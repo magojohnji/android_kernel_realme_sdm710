@@ -2109,41 +2109,6 @@ static const struct file_operations prox_mask_control_fops = {
     .owner = THIS_MODULE,
 };
 
-static ssize_t fod_prox_show(struct file *file, char __user *user_buf, size_t count, loff_t *ppos)
-{
-    char page[PAGESIZE] = {0};
-    snprintf(page, PAGESIZE-1, "%d\n", fod_proxcheck);
-    return simple_read_from_buffer(user_buf, count, ppos, page, strlen(page));
-}
-
-static ssize_t fod_prox_write(struct file *file, const char __user *user_buf, size_t count, loff_t *ppos)
-{
-    struct touchpanel_data *ts = PDE_DATA(file_inode(file));
-    int value = 0;
-    char buf[4] = {0};
-
-    if (count > 2 || !ts)
-        return count;
-
-    if (copy_from_user(buf, user_buf, count)) {
-        TPD_INFO("%s: read proc input error.\n", __func__);
-        return count;
-    }
-
-    sscanf(buf, "%d", &value);
-
-    fod_proxcheck = !!value;
-
-    return count;
-}
-
-static const struct file_operations fod_prox_control_fops = {
-    .write = fod_prox_write,
-    .read =  fod_prox_show,
-    .open = simple_open,
-    .owner = THIS_MODULE,
-};
-
 static ssize_t proc_is_dozing_rn(struct file *file, char __user *user_buf, size_t count, loff_t *ppos)
 {
     int ret = 0;
@@ -4283,12 +4248,6 @@ static int init_touchpanel_proc(struct touchpanel_data *ts)
             ret = -ENOMEM;
             TPD_INFO("%s: Couldn't create proc entry, %d\n", __func__, __LINE__);
         }
-    }
-
-    prEntry_tmp = proc_create_data("fod_proxcheck", 0666, prEntry_tp, &fod_prox_control_fops, ts);
-    if (prEntry_tmp == NULL) {
-        ret = -ENOMEM;
-        TPD_INFO("%s: Couldn't create proc entry, %d\n", __func__, __LINE__);
     }
 
     prEntry_tmp = proc_create_data("prox_mask", 0666, prEntry_tp, &prox_mask_control_fops, ts);
